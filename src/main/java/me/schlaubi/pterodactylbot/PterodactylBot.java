@@ -19,10 +19,20 @@
 
 package me.schlaubi.pterodactylbot;
 
+import me.schlaubi.commandcord.core.APIWrapper;
+import me.schlaubi.commandcord.core.CommandManager;
+import me.schlaubi.commandcord.core.CommandManagerBuilder;
+import me.schlaubi.commandcord.listeners.jda.JDAListener;
+import me.schlaubi.commandcord.util.helpcommands.JDAHelpCommand;
 import me.schlaubi.pterodactylbot.core.GameAnimator;
+import me.schlaubi.pterodactylbot.core.InformationProvider;
+import me.schlaubi.pterodactylbot.core.translation.TranslationManager;
 import me.schlaubi.pterodactylbot.io.FileManager;
 import me.schlaubi.pterodactylbot.io.config.Configuration;
 import me.schlaubi.pterodactylbot.io.database.MySQL;
+import me.schlaubi.pterodactylbot.listener.CommandListener;
+import me.schlaubi.pterodactylbot.listener.DatabaseListener;
+import me.schlaubi.pterodactylbot.listener.SelfMentionListener;
 import net.dv8tion.jda.bot.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.bot.sharding.ShardManager;
 import net.dv8tion.jda.core.OnlineStatus;
@@ -52,8 +62,11 @@ public class PterodactylBot {
     private final Configuration configuration;
     private final OkHttpClient httpClient;
     private final GameAnimator gameAnimator;
+    private CommandManager commandManager;
     private final int MAX_SHARD_COUNT = 5;
     private ShardManager shardManager;
+    private final TranslationManager translationManager;
+    private InformationProvider informationProvider;
 
     public static void main(String[] args) {
         if (instance != null)
@@ -72,6 +85,8 @@ public class PterodactylBot {
         logger.info("[LOGGER] Logger initialized");
         //Init config
         configuration = initConfig();
+        //Init translations
+        translationManager = new TranslationManager();
         //Connect to MySQL
         mySQL = new MySQL();
         //Create default databases
@@ -88,15 +103,58 @@ public class PterodactylBot {
                 .setToken(configuration.getJSONObject("bot").getString("token"))
                 .setShardsTotal(retriveShardCount())
                 .setStatus(OnlineStatus.DO_NOT_DISTURB)
+                .addEventListeners(
+                        new JDAListener(),
+                        new SelfMentionListener(),
+                        new DatabaseListener()
+                        )
                 .setGame(Game.playing("Starting ..."));
         try {
             shardManager = builder.build();
         } catch (Exception e) {
             logger.error("[JDA] An error occured while starting bot", e);
         }
+
+        informationProvider = new InformationProvider();
+        commandManager = new CommandManagerBuilder(APIWrapper.JDA)
+                .setApi(shardManager)
+                .setDefaultPrefix(configuration.getJSONObject("settings").getString("default_prefix"))
+                .deleteCommandMessages(7)
+                .enableBlacklist(true)
+                .setBlacklistProvider(informationProvider)
+                .authorIsAdmin(true)
+                .enableTyping(true)
+                .enableGuildPrefixes(true)
+                .setPrefixProvider(informationProvider)
+                .setPermissionProvider(informationProvider)
+                .build();
+        commandManager.registerCommands(
+                new JDAHelpCommand()
+        );
+        commandManager.getEventManager().registerListener(new CommandListener());
     }
 
     private void createDefaultDatabases() {
+        mySQL.addDefaultDatabase(() -> "CREATE TABLE IF NOT EXISTS guilds\n" +
+                "(\n" +
+                "    id INT PRIMARY KEY AUTO_INCREMENT,\n" +
+                "    guildId BIGINT,\n" +
+                "    prefix VARCHAR(50),\n" +
+                "    blacklistedChannels TEXT\n" +
+                ");");
+        mySQL.addDefaultDatabase(() -> "CREATE TABLE IF NOT EXISTS users\n" +
+                "(\n" +
+                "    id INT PRIMARY KEY AUTO_INCREMENT,\n" +
+                "    userId BIGINT,\n" +
+                "    language VARCHAR(50)\n" +
+                ");");
+        mySQL.addDefaultDatabase(() -> "CREATE TABLE IF NOT EXISTS permissions\n" +
+                "(\n" +
+                "    id INT PRIMARY KEY AUTO_INCREMENT,\n" +
+                "    guildId BIGINT,\n" +
+                "    userId BIGINT,\n" +
+                "    permissionLevel int\n" +
+                ");");
         mySQL.createMySQLDatabases();
     }
 
@@ -178,7 +236,15 @@ public class PterodactylBot {
         return configuration;
     }
 
-    public OkHttpClient getHttpClient() {
-        return httpClient;
+    public ShardManager getShardManager() {
+        return shardManager;
+    }
+
+    public TranslationManager getTranslationManager() {
+        return translationManager;
+    }
+
+    public InformationProvider getInformationProvider() {
+        return informationProvider;
     }
 }

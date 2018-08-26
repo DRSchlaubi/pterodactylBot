@@ -71,7 +71,6 @@ public class Configuration extends JSONObject {
             if (!object.has(key))
                 object.put(key, value);
         });
-        System.out.println(object.toString(4));
         return object;
     }
 

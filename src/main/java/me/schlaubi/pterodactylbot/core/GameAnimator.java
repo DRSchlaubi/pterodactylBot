@@ -44,7 +44,7 @@ public class GameAnimator extends TimerTask {
 
     @Override
     public void run() {
-        if (count > games.length())
+        if (count > games.length() - 1)
             count = 0;
         shardManager.setGame(parseGame(games.getString(count)));
         count++;
