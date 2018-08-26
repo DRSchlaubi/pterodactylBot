@@ -26,6 +26,7 @@ import me.schlaubi.commandcord.command.permission.PermissionProvider;
 import me.schlaubi.pterodactylbot.PterodactylBot;
 import me.schlaubi.pterodactylbot.io.database.MySQL;
 import net.dv8tion.jda.bot.sharding.ShardManager;
+import net.dv8tion.jda.core.Permission;
 import org.apache.log4j.Logger;
 
 import java.sql.PreparedStatement;
@@ -69,7 +70,8 @@ public class InformationProvider implements PrefixProvider, BlackListProvider, P
 
     @Override
     public boolean isGuildOwner(Member member) {
-        return shardManager.getGuildById(member.getGuildId()).getMemberById(member.getUserId()).isOwner();
+        net.dv8tion.jda.core.entities.Member owner = shardManager.getGuildById(member.getGuildId()).getMemberById(member.getUserId());
+        return owner.isOwner() || owner.hasPermission(Permission.MANAGE_SERVER);
     }
 
     @Override

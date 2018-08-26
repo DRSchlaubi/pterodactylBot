@@ -24,6 +24,7 @@ import me.schlaubi.commandcord.core.CommandManager;
 import me.schlaubi.commandcord.core.CommandManagerBuilder;
 import me.schlaubi.commandcord.listeners.jda.JDAListener;
 import me.schlaubi.commandcord.util.helpcommands.JDAHelpCommand;
+import me.schlaubi.pterodactylbot.commands.settings.PrefixCommand;
 import me.schlaubi.pterodactylbot.core.GameAnimator;
 import me.schlaubi.pterodactylbot.core.InformationProvider;
 import me.schlaubi.pterodactylbot.core.translation.TranslationManager;
@@ -129,7 +130,8 @@ public class PterodactylBot {
                 .setPermissionProvider(informationProvider)
                 .build();
         commandManager.registerCommands(
-                new JDAHelpCommand()
+                new JDAHelpCommand(),
+                new PrefixCommand()
         );
         commandManager.getEventManager().registerListener(new CommandListener());
     }
@@ -221,6 +223,7 @@ public class PterodactylBot {
         final JSONObject settingsObject = new JSONObject();
         settingsObject.put("default_prefix", "!");
         out.addDefault("settings", settingsObject);
+        out.addDefault("owners", new JSONArray().put("264048760580079616"));
         return out.init();
     }
 
