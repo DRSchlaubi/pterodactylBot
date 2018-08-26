@@ -38,7 +38,3 @@ buildNumber.properties
 /config/
 /logs/
 /.idea/
-src/main/java/me/schlaubi/pterodactylbot/commands/
-src/main/java/me/schlaubi/pterodactylbot/util/
-src/main/resources/
-src/test/
