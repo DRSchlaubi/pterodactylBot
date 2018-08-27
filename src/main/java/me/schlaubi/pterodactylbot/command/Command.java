@@ -25,8 +25,11 @@ import me.schlaubi.commandcord.command.permission.Permissions;
 import me.schlaubi.commandcord.command.result.Result;
 import me.schlaubi.commandcord.command.result.impl.JDAResult;
 import me.schlaubi.pterodactylbot.PterodactylBot;
+import me.schlaubi.pterodactylbot.core.entity.DatabaseGuild;
+import me.schlaubi.pterodactylbot.core.entity.DatabaseUser;
 import me.schlaubi.pterodactylbot.io.database.MySQL;
 import net.dv8tion.jda.core.EmbedBuilder;
+import net.dv8tion.jda.core.entities.Guild;
 import net.dv8tion.jda.core.entities.User;
 
 import java.awt.*;
@@ -48,6 +51,14 @@ public abstract class Command extends JDACommand {
 
     protected MySQL getMySQL() {
         return PterodactylBot.getInstance().getMySQL();
+    }
+
+    protected DatabaseGuild getGuild(Guild guild) {
+        return PterodactylBot.getInstance().getGuildCache().getEntity(guild.getIdLong());
+    }
+
+    protected DatabaseUser getUser(User user) {
+        return PterodactylBot.getInstance().getUserCache().getEntity(user.getIdLong());
     }
 
 }

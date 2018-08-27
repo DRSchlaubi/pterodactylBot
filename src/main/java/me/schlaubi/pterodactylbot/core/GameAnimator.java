@@ -51,7 +51,7 @@ public class GameAnimator extends TimerTask {
     }
 
     public synchronized void start() {
-        logger.info("[GAMEANIMATOR] Starting game animaor");
+        logger.info("[GAMEANIMATOR] Starting game-animator ...");
         timer.scheduleAtFixedRate(this, 0L, 30000L);
     }
 

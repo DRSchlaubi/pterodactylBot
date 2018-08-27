@@ -24,9 +24,13 @@ import me.schlaubi.commandcord.core.CommandManager;
 import me.schlaubi.commandcord.core.CommandManagerBuilder;
 import me.schlaubi.commandcord.listeners.jda.JDAListener;
 import me.schlaubi.commandcord.util.helpcommands.JDAHelpCommand;
+import me.schlaubi.pterodactylbot.commands.settings.BlacklistCommand;
 import me.schlaubi.pterodactylbot.commands.settings.PrefixCommand;
 import me.schlaubi.pterodactylbot.core.GameAnimator;
 import me.schlaubi.pterodactylbot.core.InformationProvider;
+import me.schlaubi.pterodactylbot.core.caching.Cache;
+import me.schlaubi.pterodactylbot.core.entity.DatabaseGuild;
+import me.schlaubi.pterodactylbot.core.entity.DatabaseUser;
 import me.schlaubi.pterodactylbot.core.translation.TranslationManager;
 import me.schlaubi.pterodactylbot.io.FileManager;
 import me.schlaubi.pterodactylbot.io.config.Configuration;
@@ -41,10 +45,7 @@ import net.dv8tion.jda.core.entities.Game;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
+import org.apache.log4j.*;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -68,6 +69,8 @@ public class PterodactylBot {
     private ShardManager shardManager;
     private final TranslationManager translationManager;
     private InformationProvider informationProvider;
+    private Cache<DatabaseUser> userCache;
+    private Cache<DatabaseGuild> guildCache;
 
     public static void main(String[] args) {
         if (instance != null)
@@ -120,7 +123,7 @@ public class PterodactylBot {
         commandManager = new CommandManagerBuilder(APIWrapper.JDA)
                 .setApi(shardManager)
                 .setDefaultPrefix(configuration.getJSONObject("settings").getString("default_prefix"))
-                .deleteCommandMessages(7)
+                .deleteCommandMessages(15)
                 .enableBlacklist(true)
                 .setBlacklistProvider(informationProvider)
                 .authorIsAdmin(true)
@@ -131,9 +134,13 @@ public class PterodactylBot {
                 .build();
         commandManager.registerCommands(
                 new JDAHelpCommand(),
-                new PrefixCommand()
+                new PrefixCommand(),
+                new BlacklistCommand()
         );
         commandManager.getEventManager().registerListener(new CommandListener());
+        //Instanciate caches
+        userCache = new Cache<>(DatabaseUser.class);
+        guildCache = new Cache<>(DatabaseGuild.class);
     }
 
     private void createDefaultDatabases() {
@@ -164,16 +171,15 @@ public class PterodactylBot {
         Request req = new Request.Builder()
                 .url("https://discordapp.com/api/gateway/bot")
                 .header("Authorization", configuration.getJSONObject("bot").getString("token"))
-                .header("User-Agent", "PterdactylBot")
                 .get()
                 .build();
-        try (Response response = httpClient.newCall(req).execute()){
+        try (Response response = httpClient.newCall(req).execute()) {
             assert response.body() != null;
             Integer shardcount = new JSONObject(response.body().string()).getInt("shards");
-            logger.info(String.format("[JDA] Starting with %d shards", shardcount));
+            logger.info(String.format("[JDA] Starting with %d shards ...", shardcount));
             return shardcount;
         } catch (IOException | NullPointerException | JSONException e) {
-            logger.error("[JDA] Error while retriving shard count using maximum count", e);
+            logger.error("[JDA] Error while retriving shard count using maximum count!", e);
             return MAX_SHARD_COUNT;
         }
     }
@@ -183,6 +189,7 @@ public class PterodactylBot {
         final PatternLayout consolePatternLayout = new PatternLayout("(%d{HH:mm:ss}) [Bot] [%p] | %m%n");
         consoleAppender.setLayout(consolePatternLayout);
         consoleAppender.activateOptions();
+
         Logger.getRootLogger().addAppender(consoleAppender);
 
         final PatternLayout filePatternLayout = new PatternLayout("(%d{dd.MM.yyyy HH:mm:ss}) [Bot] [%p] | %m%n");
@@ -249,5 +256,13 @@ public class PterodactylBot {
 
     public InformationProvider getInformationProvider() {
         return informationProvider;
+    }
+
+    public Cache<DatabaseUser> getUserCache() {
+        return userCache;
+    }
+
+    public Cache<DatabaseGuild> getGuildCache() {
+        return guildCache;
     }
 }

@@ -27,8 +27,6 @@ import me.schlaubi.pterodactylbot.PterodactylBot;
 import me.schlaubi.pterodactylbot.command.Command;
 import me.schlaubi.pterodactylbot.util.EmbedUtil;
 
-import java.sql.PreparedStatement;
-
 public class PrefixCommand extends Command {
 
     public PrefixCommand() {
@@ -40,9 +38,7 @@ public class PrefixCommand extends Command {
         if (args.length == 0)
             return send(EmbedUtil.info(translate("prefix.actualprefix.title", event.getAuthor()),String.format(translate("prefix.actualprefix.description",event.getAuthor()), PterodactylBot.getInstance().getInformationProvider().getPrefix(event.getGuild().getId()))));
         String prefix = args[0];
-        PreparedStatement ps = getMySQL().getConnection().prepareStatement("UPDATE guilds SET prefix = ?");
-        ps.setString(1, prefix);
-        ps.execute();
+        getGuild(event.getGuild()).setPrefix(prefix);
         return send(EmbedUtil.success(translate("prefix.set.title", event.getAuthor()), String.format(translate("prefix.set.description", event.getAuthor()), prefix)));
     }
 }

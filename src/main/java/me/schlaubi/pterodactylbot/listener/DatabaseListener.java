@@ -20,6 +20,8 @@
 package me.schlaubi.pterodactylbot.listener;
 
 import me.schlaubi.pterodactylbot.PterodactylBot;
+import me.schlaubi.pterodactylbot.core.entity.DatabaseGuild;
+import me.schlaubi.pterodactylbot.core.entity.DatabaseUser;
 import me.schlaubi.pterodactylbot.io.database.MySQL;
 import net.dv8tion.jda.core.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.core.events.guild.GuildLeaveEvent;
@@ -30,6 +32,7 @@ import org.apache.log4j.Logger;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Locale;
 
 public class DatabaseListener extends ListenerAdapter {
 
@@ -40,13 +43,9 @@ public class DatabaseListener extends ListenerAdapter {
     @Override
     public void onGuildJoin(GuildJoinEvent event) {
         try {
-            PreparedStatement ps = mySQL.getConnection().prepareStatement("INSERT INTO guilds (guildId, prefix, blacklistedChannels) VALUES (?, ?, ?)");
-            ps.setString(1, event.getGuild().getId());
-            ps.setString(2, "!");
-            ps.setString(3, "");
-            ps.execute();
+            PterodactylBot.getInstance().getGuildCache().add(event.getGuild().getIdLong(), new DatabaseGuild(event.getGuild().getIdLong(), "p!"));
             logger.info(String.format("[DB] Added guild %s to database", event.getGuild().getId()));
-        } catch (SQLException e) {
+        } catch (Exception e) {
             logger.warn("[DATABASE] Unable to add guild to database", e);
         }
         new Thread(() -> event.getGuild().getMembers().forEach(member -> insertUser(member.getUser().getId())), "GuildJoinThread").start();
@@ -73,15 +72,12 @@ public class DatabaseListener extends ListenerAdapter {
         try {
             PreparedStatement existsStatement = mySQL.getConnection().prepareStatement("SELECT * FROM users WHERE userId = ?");
             existsStatement.setString(1, userId);
-            PreparedStatement insertStatement = mySQL.getConnection().prepareStatement("INSERT INTO users (userId, language) VALUES (?, ?)");
-            insertStatement.setString(1, userId);
-            insertStatement.setString(2, "en_US");
             ResultSet rs = existsStatement.executeQuery();
             if (!rs.next()) {
-                insertStatement.execute();
+                PterodactylBot.getInstance().getUserCache().add(Long.valueOf(userId), new DatabaseUser(Long.parseLong(userId), new Locale("en", "US")));
                 logger.info(String.format("[DB] Added user %s to database", userId));
             }
-        }  catch (SQLException e) {
+        }  catch (Exception e) {
             logger.warn("[DATABASE] Unable to add user to database", e);
         }
     }

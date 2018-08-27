@@ -41,31 +41,12 @@ public class InformationProvider implements PrefixProvider, BlackListProvider, P
 
     @Override
     public boolean isBlackListed(String textChannelId, String guildId) {
-        try {
-            PreparedStatement ps = mySQL.getConnection().prepareStatement("SELECT * FROM guilds WHERE guildId = ?");
-            ps.setString(1, guildId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next())
-                return  rs.getString("blacklistedChannels").contains(textChannelId);
-        } catch (SQLException e) {
-            logger.warn(String.format("[INFORMATIONPROVIDER] An error occured while retireving blacklisted channels for channel %s", textChannelId));
-        }
-        return false;
+        return PterodactylBot.getInstance().getGuildCache().getEntity(Long.valueOf(guildId)).isChannelBlacklisted(textChannelId);
     }
 
     @Override
     public String getPrefix(String guildId) {
-        try {
-            PreparedStatement ps = mySQL.getConnection().prepareStatement("SELECT prefix FROM guilds WHERE guildId = ?");
-            ps.setString(1, guildId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next())
-                return rs.getString("prefix");
-        } catch (SQLException e) {
-            logger.warn(String.format("[INFORMATIONPROVIDER] An error occurred while fetching prefix für guild %s", guildId), e);
-            return PterodactylBot.getInstance().getConfiguration().getJSONObject("settings").getString("prefix");
-        }
-        return PterodactylBot.getInstance().getConfiguration().getJSONObject("settings").getString("prefix");
+        return PterodactylBot.getInstance().getGuildCache().getEntity(Long.valueOf(guildId)).getPrefix();
     }
 
     @Override

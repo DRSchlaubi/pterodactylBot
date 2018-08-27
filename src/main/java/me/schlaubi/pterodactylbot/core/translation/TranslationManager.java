@@ -62,26 +62,6 @@ public class TranslationManager {
     }
 
     public Locale getLocaleByUser(String userId) {
-        String languageTag = null;
-        try {
-            PreparedStatement ps = PterodactylBot.getInstance().getMySQL().getConnection().prepareStatement("SELECT language FROM users WHERE userId = ?");
-            ps.setString(1, userId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next())
-                languageTag = rs.getString("language");
-            if (languageTag == null)
-                languageTag = "en_US";
-        } catch (SQLException e) {
-            logger.error(String.format("[TRANSLATONMANAGER] There was an error while fetching locale for user %s", userId), e);
-            languageTag = "en_US";
-        }
-        try {
-            String[] tag = languageTag.split("_");
-            java.util.Locale locale = new java.util.Locale(tag[0], tag[1]);
-            return getLocaleByLocale(locale);
-        } catch (Exception e2) {
-            logger.error(String.format("[TRANSLATONMANAGER] There was an error while fetching locale for tag", languageTag), e2);
-        }
-        return null;
+        return getLocaleByLocale(PterodactylBot.getInstance().getUserCache().getEntity(Long.valueOf(userId)).getLocale());
     }
 }
