@@ -13,3 +13,9 @@ Coming soon when the bot is finished
 - [log4j](https://logging.apache.org/log4j/)
 - [org.json](https://json.org)
 - [Hikari](https://github.com/brettwooldridge/HikariCP)
+
+## Help to translate 
+Helpt to translate the bot on [i18n.pterodactylbot.io](https://i18n.pterodactylbot.ga)
+
+## Support me
+You can support me [here](http://tipeeestream.com/schlaubi/donation)
